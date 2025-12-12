@@ -1,7 +1,5 @@
 # Open-AutoGLM
 
-[Readme in English](README_en.md)
-
 <div align="center">
 <img src=resources/logo.svg width="20%"/>
 </div>
@@ -17,15 +15,6 @@ Agent 即可自动解析意图、理解当前界面、规划下一步动作并�
 ADB 调试能力，可通过 WiFi 或网络连接设备，实现灵活的远程控制与开发。
 
 > ⚠️ 本项目仅供研究和学习使用。严禁用于非法获取信息、干扰系统或任何违法活动。请仔细审阅 [使用条款](resources/privacy_policy.txt)。
-
-## 模型下载地址
-
-| Model             | Download Links                                                                                                                                             |
-|-------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| AutoGLM-Phone-9B  | [🤗 Hugging Face](https://huggingface.co/zai-org/AutoGLM-Phone-9B)<br>[🤖 ModelScope](https://modelscope.cn/models/ZhipuAI/AutoGLM-Phone-9B)               |
-| AutoGLM-Phone-9B-Multilingual | [🤗 Hugging Face](https://huggingface.co/zai-org/AutoGLM-Phone-9B-Multilingual)<br>[🤖 ModelScope](https://modelscope.cn/models/ZhipuAI/AutoGLM-Phone-9B-Multilingual) |
-
-其中，`AutoGLM-Phone-9B` 是针对中文手机应用优化的模型，而 `AutoGLM-Phone-9B-Multilingual` 支持英语场景，适用于包含英文等其他语言内容的应用。
 
 ## 环境准备
 
@@ -90,68 +79,25 @@ adb devices
 
 ### 3. 启动模型服务
 
-1. 下载模型，并按照 `requirements.txt` 中 `For Model Deployment` 章节自行安装推理引擎框架。
-2. 通过 SGlang / vLLM 启动，得到 OpenAI 格式服务。这里提供一个 vLLM部署方案，请严格遵循我们提供的启动参数:
-
-- vLLM:
-
-```shell
-python3 -m vllm.entrypoints.openai.api_server \
- --served-model-name autoglm-phone-9b \
- --allowed-local-media-path /   \
- --mm-encoder-tp-mode data \
- --mm_processor_cache_type shm \
- --mm_processor_kwargs "{\"max_pixels\":5000000}" \
- --max-model-len 25480  \
- --chat-template-content-format string \
- --limit-mm-per-prompt "{\"image\":10}" \
- --model zai-org/AutoGLM-Phone-9B \
- --port 8000
-```
-
-- 该模型结构与 `GLM-4.1V-9B-Thinking` 相同, 关于模型部署的详细内容，你也以查看 [GLM-V](https://github.com/zai-org/GLM-V)
-  获取模型部署和使用指南。
-
-- 运行成功后，将可以通过 `http://localhost:8000/v1` 访问模型服务。 如果您在远程服务器部署模型, 使用该服务器的IP访问模型.
+1.支持使用API形式调用，避免本地模型跑不起来的问题。
 
 ## 使用 AutoGLM
 
 ### 命令行
 
-根据你部署的模型, 设置 `--base-url` 和 `--model` 参数. 例如:
-
+使用API直接调用，当前使用的是 `glm-4.6v` 模型
 ```bash
 # 交互模式
-python main.py --base-url http://localhost:8000/v1 --model "autoglm-phone-9b"
+在zhipu_client.py中配置   
+    base_url: str = "https://open.bigmodel.cn/api/paas/v4"
+    model_name: str = "glm-4.6v"
+设置 export ZHIPU_API_KEY="Your APIKey"
 
-# 指定模型端点
-python main.py --base-url http://localhost:8000/v1 "打开美团搜索附近的火锅店"
-
-# 使用英文 system prompt
-python main.py --lang en --base-url http://localhost:8000/v1 "Open Chrome browser"
+配置好上面的环境变量后，即可直接运行以下命令
+python main.py --provider zhipu "打开美团帮我点一份捞饭" 
 
 # 列出支持的应用
 python main.py --list-apps
-```
-
-### Python API
-
-```python
-from phone_agent import PhoneAgent
-from phone_agent.model import ModelConfig
-
-# Configure model
-model_config = ModelConfig(
-    base_url="http://localhost:8000/v1",
-    model_name="autoglm-phone-9b",
-)
-
-# 创建 Agent
-agent = PhoneAgent(model_config=model_config)
-
-# 执行任务
-result = agent.run("打开淘宝搜索无线耳机")
-print(result)
 ```
 
 ## 远程调试
